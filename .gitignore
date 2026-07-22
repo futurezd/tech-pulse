@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime temp files (fetch/detail/build workflow)
+candidates.json
+details.json
+selection.json
+theme.txt
+
+# Generated daily digests (personal output, not part of the skill)
+docs/*.md
+docs/*.json
