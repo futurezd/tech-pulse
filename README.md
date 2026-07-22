@@ -1,15 +1,15 @@
 # tech-pulse · 每日值得关注的 10 件事（Codex Skill）
 
-对话里说「看看今天值得关注的 10 件事 / 今日技术动态 / GitHub trending / AI 日报」等即可触发。聚合 **aihot + GitHub + 知乎日报 + 掘金 + Solidot** 五个互不重叠的源，由 Codex 跨源精选 10 件、附中文摘要，归档到 `docs/`。
+对话里说「看看今天值得关注的 10 件事 / 今日技术动态 / GitHub trending / AI 日报」等即可触发。聚合 **aihot + GitHub + 知乎日报 + 掘金 + Solidot** 五个源，由 Codex 跨源精选 10 件、附中文摘要，归档到 `docs/`。
 
-## 数据源（已去重）
-- **aihot**：`aihot.virxact.com`，中文 AI 行业聚合（一个源已含 Hacker News 中文翻译、公众号、OpenAI、HuggingFace、xAI、Cursor、IT之家 等）。
-- **GitHub**：`api.github.com` 搜索 API，取近 14 天新建高 star 项目（trending 代理；github.com 网页常被墙，但 API 可达）。
+## 数据源
+- **aihot**：`aihot.virxact.com`，中文 AI 行业聚合（已含 Hacker News 中文翻译、公众号、OpenAI、HuggingFace、xAI、Cursor、IT之家 等）。
+- **GitHub**：`api.github.com` 搜索 API，取近 14 天新建高 star 项目（github.com 网页常被墙，API 可达）。
 - **知乎日报**：`news-at.zhihu.com` 官方 API。
 - **掘金**：`api.juejin.cn` 推荐流，中文开发者文章。
 - **Solidot**：`solidot.org/index.rss` RSS，中文硬科技新闻，免 key。
-- 已移除：ArXiv（与 aihot 冗余）、V2EX/Reddit/HuggingFace/X（网络不可达或需 key）。各源独立，任一失败自动跳过，无需外部 LLM key（Codex 自己精选）。
-- `fetch.py` 输出前做**跨源去重**：按归一化标题 + URL 去重，冲突时保留源优先级更高者（aihot>GitHub>知乎日报>掘金>Solidot）。
+
+各源独立，任一失败自动跳过，无需外部 LLM key。`fetch.py` 输出前按归一化标题 + URL 跨源去重，冲突时保留优先级更高者（aihot>GitHub>知乎日报>掘金>Solidot）。
 
 ## 文件
 - `SKILL.md` - 触发词、数据源与工作流
