@@ -24,7 +24,52 @@ cd <本 skill 目录>
 ```
 之后脚本统一用 `.\.venv\Scripts\python.exe` 运行。
 
-## 工作流
+### 快速模式（省 token，推荐）
+
+使用 `curate.py` 可将原来的 5 步合并为 2 步，大幅减少模型 token 消耗（约 4 倍）。
+
+**第 1 步：采集候选并输出精简索引**
+```
+.\.venv\Scripts\python.exe scripts\fetch.py --compact --out candidates.json
+```
+模型只霅读 stdout 的精简索引（约 3KB / ~1K token），candidates.json 完整数据落盘不读。
+
+**第 2 步：精选 + 构建（一步完成）**
+
+模型写 `picks.txt`（纯文本，极简格式），第一行是主题，后续每行是 `index|summary`：
+```
+theme: 一句话今日主题
+0|第一条的中文摘要，2-3 句话说明是什么
+3|第二条摘要
+5|第三条摘要
+7|第四条摘要
+9|第五条摘要
+12|第六条摘要
+15|第七条摘要
+20|第八条摘要
+25|第九条摘要
+30|第十条摘要
+```
+然后运行：
+```
+.\.venv\Scripts\python.exe scripts\curate.py --date YYYY-MM-DD --picks picks.txt --candidates candidates.json
+```
+curate.py 自动完成：索引解析 → 抓取详情 → 提取相关链接 → 写 selection.json + details.json + theme.txt → 调用 build.py 生成归档。related 链接自动从详情页提取，模型无需手动编写。
+
+如需手动添加 related 链接，在摘要后加 `|url1,url2`：`0|摘要|https://example.com,https://example2.com`
+
+加 `--skip-detail` 可跳过抓取详情（更快，但 sidecar 缺 body/links）。
+
+**对比**
+- 原流程 5 步（fetch → 读 candidates 取 URL → 写 selection → detail → build）约 ~15K tokens。
+- 快速模式 2 步约 ~4K tokens。
+
+
+# 完整模式（可选参考）
+
+以下为完整的分步流程，快速模式已封装所有步骤。仅在需要手动控制各环节时参考。
+
+# 工作流
 1. **采集候选**：运行 `.\.venv\Scripts\python.exe scripts\fetch.py --out candidates.json`。stdout 也可输出 JSON 候选数组（自动跨源去重），stderr 输出日志（含各源数量与 dedup 行）。每项：`{title, url, source, desc, metric, discuss, extra?}`。配置 env：`SOURCES`（默认 `aihot,github,zhihu,juejin,solidot`）、各源 `*_LIMIT`、`GITHUB_DAYS`。推荐用 `--out` 直接落盘 UTF-8（Windows PowerShell `>` 重定向默认写 UTF-16，会导致 build.py 解码失败）。精选时加 `--compact` 可在 stdout 打印精简索引（idx/来源/热度/标题/短摘要），省 token、避免输出截断；按 idx 选定后用小脚本从 `candidates.json` 取对应 url。默认各源限额已调低（aihot 12 / GitHub 8 / 知乎 6 / 掘金 6 / Solidot 6，约 38 条），可用 `*_LIMIT` env 覆盖。
 2. **精选并写 selection.json**：跨所有源挑 10 件最值得关注的（创新性、实用性、影响力、热度），注意源多样性。记录一句「今日主题」。写 `selection.json`（数组）：`[{"url","summary","related":[{"text","url"}]}]`，每条 2-3 句中文摘要说清「是什么/干嘛的」，related 放原始来源链接（不显示，存 sidecar）。
 3. **抓正文与相关链接**：对选中的 10 个 URL 运行 `.\.venv\Scripts\python.exe scripts\detail.py --out details.json <url1> <url2> ...`（同样用 `--out` 避免 PowerShell `>` 重定向编码问题）。每项：`{url, title, desc, firstp, links, source}`。aihot 走详情页取精选理由/AI 摘要/原文链接；GitHub 走 api.github.com 取 README；知乎日报走内容 API；掘金 detail API 失败则回退网页 meta；其余通用抓取。
